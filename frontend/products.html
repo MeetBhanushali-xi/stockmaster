@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Products - StockMaster</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+  body { overflow-x: hidden; }
+
+  /* Sidebar */
+  .sidebar {
+    width:250px;height:100vh;position:fixed;left:0;top:0;
+    background:#1e1e2f;padding-top:20px;color:white;
+  }
+  .sidebar a {
+    color:#d2d2d2;padding:12px 20px;display:block;text-decoration:none;
+    border-radius:5px;margin:4px 8px;
+  }
+  .sidebar a.active,
+  .sidebar a:hover {
+    background:#34344a;color:white;
+  }
+  .brand {
+    font-size:20px;font-weight:bold;padding-left:20px;margin-bottom:20px;
+  }
+
+  /* Content wrapper */
+  .content {
+    margin-left:260px;
+    padding:20px;
+  }
+</style>
+</head>
+
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="brand">StockMaster</div>
+
+  <a href="dashboard.html" id="menu-dashboard">Dashboard</a>
+  <a href="products.html" id="menu-products">Products</a>
+  <a href="receipts.html" id="menu-receipts">Receipts</a>
+  <a href="deliveries.html" id="menu-deliveries">Deliveries</a>
+  <a href="transfers.html" id="menu-transfers">Transfers</a>
+
+
+  <hr style="border-color:#555;">
+  <a href="forgot_password.html">Forgot Password</a>
+  <a href="login.html">Logout</a>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="content">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4>Products</h4>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
+      + Add Product
+    </button>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <table class="table table-bordered table-hover">
+        <thead class="table-light">
+          <tr>
+            <th>Name</th>
+            <th>SKU</th>
+            <th>Category</th>
+            <th>Unit</th>
+            <th>Total Stock</th>
+            <th>Reorder Level</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="productTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ADD PRODUCT MODAL -->
+<div class="modal fade" id="addProductModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Add Product</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <input id="p_name" class="form-control mb-2" placeholder="Product Name">
+        <input id="p_sku" class="form-control mb-2" placeholder="SKU">
+        <input id="p_category" class="form-control mb-2" placeholder="Category">
+        <input id="p_unit" class="form-control mb-2" placeholder="Unit (kg/pcs/roll)">
+        <input id="p_stock" class="form-control mb-2" placeholder="Total Stock">
+        <input id="p_reorder" class="form-control mb-2" placeholder="Reorder Level">
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" onclick="addProduct()">Save</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- EDIT PRODUCT MODAL -->
+<div class="modal fade" id="editModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Product</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <input id="e_name" class="form-control mb-2" placeholder="Product Name">
+        <input id="e_sku" class="form-control mb-2" placeholder="SKU">
+        <input id="e_category" class="form-control mb-2" placeholder="Category">
+        <input id="e_unit" class="form-control mb-2" placeholder="Unit">
+        <input id="e_stock" class="form-control mb-2" placeholder="Total Stock">
+        <input id="e_reorder" class="form-control mb-2" placeholder="Reorder Level">
+
+        <input type="hidden" id="editProductId">
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" onclick="updateProduct()">Update</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<script>
+// Highlight sidebar active link
+function activateMenu(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.add("active");
+}
+
+activateMenu("menu-products");
+
+
+/* ============================
+      PRODUCT LOGIC
+============================= */
+const api = "/api/products";
+
+async function loadProducts() {
+  const res = await fetch(api);
+  const products = await res.json();
+
+  const tbody = document.getElementById("productTableBody");
+  tbody.innerHTML = "";
+
+  products.forEach(product => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${product.name}</td>
+        <td>${product.sku}</td>
+        <td>${product.category}</td>
+        <td>${product.unit}</td>
+        <td>${product.total_stock}</td>
+        <td>${product.reorder_level}</td>
+        <td>
+          <button class="btn btn-sm btn-warning" onclick='openEditModal(${JSON.stringify(product)})'>
+            Edit
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+// Add product
+async function addProduct() {
+  const body = {
+    name: document.getElementById("p_name").value,
+    sku: document.getElementById("p_sku").value,
+    category: document.getElementById("p_category").value,
+    unit: document.getElementById("p_unit").value,
+    total_stock: Number(document.getElementById("p_stock").value),
+    reorder_level: Number(document.getElementById("p_reorder").value)
+  };
+
+  await fetch(api, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+
+  location.reload();
+}
+
+function openEditModal(product) {
+  document.getElementById("e_name").value = product.name;
+  document.getElementById("e_sku").value = product.sku;
+  document.getElementById("e_category").value = product.category;
+  document.getElementById("e_unit").value = product.unit;
+  document.getElementById("e_stock").value = product.total_stock;
+  document.getElementById("e_reorder").value = product.reorder_level;
+  document.getElementById("editProductId").value = product.id;
+
+  new bootstrap.Modal(document.getElementById("editModal")).show();
+}
+
+async function updateProduct() {
+  const id = document.getElementById("editProductId").value;
+
+  const body = {
+    name: document.getElementById("e_name").value,
+    sku: document.getElementById("e_sku").value,
+    category: document.getElementById("e_category").value,
+    unit: document.getElementById("e_unit").value,
+    total_stock: Number(document.getElementById("e_stock").value),
+    reorder_level: Number(document.getElementById("e_reorder").value)
+  };
+
+  await fetch(`${api}/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+
+  location.reload();
+}
+
+// Load products on page load
+loadProducts();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

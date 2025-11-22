@@ -1,0 +1,102 @@
+{
+  "receipts": [
+    {
+      "id": 1,
+      "supplier": "ABC Metals",
+      "status": "Done",
+      "validatedAt": "2025-11-22T10:36:46.816Z"
+    },
+    {
+      "id": 2,
+      "supplier": "BoxCo",
+      "status": "Done"
+    },
+    {
+      "id": 1001,
+      "supplier": "Initial Supplier",
+      "items": [
+        {
+          "productId": 1,
+          "qty": 10
+        },
+        {
+          "productId": 2,
+          "qty": 5
+        }
+      ],
+      "status": "Waiting",
+      "createdAt": "2025-11-22T00:00:00.000Z"
+    },
+    {
+      "id": 1763801967840,
+      "supplier": "ABC Metals",
+      "items": [
+        {
+          "productId": 2,
+          "qty": 3
+        }
+      ],
+      "status": "Waiting",
+      "createdAt": "2025-11-22T08:59:27.840Z"
+    },
+    {
+      "id": 1763807842588,
+      "supplier": "Hriday",
+      "items": [
+        {
+          "productId": 1,
+          "qty": 100
+        }
+      ],
+      "status": "Done",
+      "createdAt": "2025-11-22T10:37:22.588Z",
+      "validatedAt": "2025-11-22T10:39:04.693Z"
+    },
+    {
+      "id": 1763807876369,
+      "supplier": "Hriday",
+      "items": [
+        {
+          "productId": 1,
+          "qty": 200
+        }
+      ],
+      "status": "Done",
+      "createdAt": "2025-11-22T10:37:56.369Z",
+      "validatedAt": "2025-11-22T10:38:35.995Z"
+    }
+  ],
+  "deliveries": [
+    {
+      "id": 1,
+      "customer": "Retailer A",
+      "status": "Ready"
+    },
+    {
+      "id": 2,
+      "customer": "Retailer B",
+      "status": "Done"
+    },
+    {
+      "id": 1763808051019,
+      "customer": "Retailer C",
+      "items": [
+        {
+          "productId": 2,
+          "qty": 1
+        }
+      ],
+      "status": "Done",
+      "createdAt": "2025-11-22T10:40:51.019Z",
+      "validatedAt": "2025-11-22T10:41:17.280Z"
+    }
+  ],
+  "internalTransfers": [
+    {
+      "id": 1,
+      "from": "Main Warehouse",
+      "to": "Production",
+      "status": "Scheduled"
+    }
+  ]
+}

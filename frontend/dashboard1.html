@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Dashboard - StockMaster</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+  <!-- Top navbar -->
+  <nav class="navbar navbar-expand-lg navbar-white bg-white border-bottom">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold" href="#">StockMaster</a>
+      <div class="d-flex">
+        <span class="me-3">Admin</span>
+        <button class="btn btn-outline-secondary btn-sm">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container my-4">
+    <div class="row align-items-center mb-3">
+      <div class="col">
+        <h4 class="mb-0">Dashboard</h4>
+        <small class="text-muted">Overview of inventory operations</small>
+      </div>
+      <div class="col-auto">
+        <button id="refreshBtn" class="btn btn-sm btn-primary">Refresh</button>
+      </div>
+    </div>
+
+    <!-- KPI cards -->
+    <div id="kpiRow" class="row gy-3">
+      <div class="col-sm-6 col-lg-3">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h6 class="card-title">Total Products</h6>
+            <h2 id="totalProducts" class="fw-bold">—</h2>
+            <small class="text-muted">Products in catalogue</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-sm-6 col-lg-3">
+        <div class="card shadow-sm border-warning">
+          <div class="card-body">
+            <h6 class="card-title">Low / Out of Stock</h6>
+            <h2 id="lowStockItems" class="fw-bold text-warning">—</h2>
+            <small class="text-muted">Needs reorder or check</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-sm-6 col-lg-3">
+        <div class="card shadow-sm border-info">
+          <div class="card-body">
+            <h6 class="card-title">Pending Receipts</h6>
+            <h2 id="pendingReceipts" class="fw-bold text-info">—</h2>
+            <small class="text-muted">Incoming stock to validate</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-sm-6 col-lg-3">
+        <div class="card shadow-sm border-danger">
+          <div class="card-body">
+            <h6 class="card-title">Pending Deliveries</h6>
+            <h2 id="pendingDeliveries" class="fw-bold text-danger">—</h2>
+            <small class="text-muted">Outgoing orders to process</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-lg-4 mt-3">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h6 class="card-title">Internal Transfers Scheduled</h6>
+            <h2 id="internalTransfersScheduled" class="fw-bold">—</h2>
+            <small class="text-muted">Transfers between locations</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- small footer / source -->
+    <div class="mt-4 text-muted">
+      <small>Data is read from JSON files in the backend (no DB).</small>
+    </div>
+  </div>
+
+<script>
+const api = "/api/dashboard";
+
+async function loadDashboard() {
+  setLoading(true);
+  try {
+    const res = await fetch(api);
+    if (!res.ok) throw new Error("Fetch failed: " + res.status);
+    const d = await res.json();
+    document.getElementById("totalProducts").innerText = d.totalProducts ?? 0;
+    document.getElementById("lowStockItems").innerText = d.lowStockItems ?? 0;
+    document.getElementById("pendingReceipts").innerText = d.pendingReceipts ?? 0;
+    document.getElementById("pendingDeliveries").innerText = d.pendingDeliveries ?? 0;
+    document.getElementById("internalTransfersScheduled").innerText = d.internalTransfersScheduled ?? 0;
+  } catch (err) {
+    console.error(err);
+    alert("Failed to load dashboard: " + err.message);
+  } finally {
+    setLoading(false);
+  }
+}
+
+function setLoading(isLoading) {
+  const refresh = document.getElementById("refreshBtn");
+  refresh.disabled = isLoading;
+  refresh.innerText = isLoading ? "Loading..." : "Refresh";
+}
+
+document.getElementById("refreshBtn").addEventListener("click", loadDashboard);
+
+// load on open
+loadDashboard();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

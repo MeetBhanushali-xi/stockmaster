@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Receipts - StockMaster</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+  body { overflow-x: hidden; }
+
+  /* Sidebar */
+  .sidebar {
+    width:250px;height:100vh;position:fixed;left:0;top:0;
+    background:#1e1e2f;padding-top:20px;color:white;
+  }
+  .sidebar a {
+    color:#d2d2d2;padding:12px 20px;display:block;text-decoration:none;
+    border-radius:5px;margin:4px 8px;
+  }
+  .sidebar a.active, .sidebar a:hover {
+    background:#34344a;color:white;
+  }
+  .brand {
+    font-size:20px;font-weight:bold;padding-left:20px;margin-bottom:20px;
+  }
+
+  /* Content */
+  .content {
+    margin-left:260px;
+    padding:20px;
+  }
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="brand">StockMaster</div>
+
+  <a href="dashboard.html" id="menu-dashboard">Dashboard</a>
+  <a href="products.html" id="menu-products">Products</a>
+  <a href="receipts.html" id="menu-receipts">Receipts</a>
+  <a href="deliveries.html" id="menu-deliveries">Deliveries</a>
+  <a href="transfers.html" id="menu-transfers">Transfers</a>
+
+
+  <hr style="border-color:#555;">
+  <a href="forgot_password.html">Forgot Password</a>
+  <a href="login.html">Logout</a>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="content">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4>Receipts</h4>
+    <div>
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addReceiptModal">+ New Receipt</button>
+      <button class="btn btn-sm btn-outline-secondary" id="refreshBtn">Refresh</button>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <table class="table table-hover">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>Supplier</th>
+            <th>Items</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="receiptsBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ADD RECEIPT MODAL -->
+<div class="modal fade" id="addReceiptModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Create Receipt</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <input id="r_supplier" class="form-control mb-2" placeholder="Supplier name">
+
+        <div class="mb-2">
+          <h6>Items</h6>
+          <div id="itemsList"></div>
+          <button class="btn btn-sm btn-outline-primary mt-2" id="addItemBtn">+ Add Item</button>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" id="saveReceiptBtn">Save Receipt</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<script>
+// Highlight active menu
+function activateMenu(id){
+  let el = document.getElementById(id);
+  if (el) el.classList.add("active");
+}
+activateMenu("menu-receipts");
+
+
+/* ================================
+   RECEIPTS LOGIC
+================================= */
+
+const apiReceipts = "/api/receipts";
+const apiProducts = "/api/products";
+
+let productsCache = [];
+
+// Load products + receipts
+async function loadAll() {
+  document.getElementById("refreshBtn").disabled = true;
+  await Promise.all([loadProducts(), loadReceipts()]);
+  document.getElementById("refreshBtn").disabled = false;
+}
+
+async function loadProducts() {
+  const res = await fetch(apiProducts);
+  productsCache = await res.json();
+}
+
+async function loadReceipts() {
+  const res = await fetch(apiReceipts);
+  const receipts = await res.json();
+
+  const tbody = document.getElementById("receiptsBody");
+  tbody.innerHTML = "";
+
+  receipts.forEach(r => {
+    const itemsHtml = (r.items || []).map(it => {
+      const prod = productsCache.find(p => Number(p.id) === Number(it.productId));
+      const name = prod ? prod.name : `#${it.productId}`;
+      return `${name} (x${it.qty})`;
+    }).join("<br>");
+
+    tbody.innerHTML += `
+      <tr>
+        <td>${r.id}</td>
+        <td>${r.supplier}</td>
+        <td>${itemsHtml}</td>
+        <td>${r.status}</td>
+        <td>${new Date(r.createdAt).toLocaleString()}</td>
+        <td>
+          ${
+            r.status !== "Done"
+              ? `<button class="btn btn-sm btn-success" onclick="validateReceipt(${r.id})">Validate</button>`
+              : `<span class="badge bg-success">Validated</span>`
+          }
+        </td>
+      </tr>
+    `;
+  });
+}
+
+// Add item row
+function addItemRow(productId = "", qty = 1) {
+  const id = Date.now() + Math.random().toString(36).slice(2, 7);
+  const div = document.createElement("div");
+  div.className = "d-flex gap-2 mb-2 align-items-center";
+  div.id = "itemRow_" + id;
+
+  const sel = document.createElement("select");
+  sel.className = "form-select";
+  sel.style.minWidth = "300px";
+
+  const empty = document.createElement("option");
+  empty.value = "";
+  empty.text = "-- Select product --";
+  sel.appendChild(empty);
+
+  productsCache.forEach(p => {
+    const o = document.createElement("option");
+    o.value = p.id;
+    o.text = `${p.name} (${p.sku || "no-sku"})`;
+    if (String(p.id) === String(productId)) o.selected = true;
+    sel.appendChild(o);
+  });
+
+  const q = document.createElement("input");
+  q.type = "number";
+  q.className = "form-control";
+  q.style.width = "100px";
+  q.value = qty;
+
+  const rem = document.createElement("button");
+  rem.className = "btn btn-outline-danger btn-sm";
+  rem.innerText = "Remove";
+  rem.onclick = () => div.remove();
+
+  div.appendChild(sel);
+  div.appendChild(q);
+  div.appendChild(rem);
+
+  document.getElementById("itemsList").appendChild(div);
+}
+
+// Save receipt
+document.getElementById("saveReceiptBtn").addEventListener("click", async () => {
+  const supplier = document.getElementById("r_supplier").value.trim();
+  if (!supplier) return alert("Enter supplier name");
+
+  const itemsDivs = Array.from(document.getElementById("itemsList").children);
+  const items = itemsDivs
+    .map(d => {
+      const sel = d.querySelector("select");
+      const q = d.querySelector("input[type='number']");
+      return { productId: sel.value, qty: Number(q.value) };
+    })
+    .filter(it => it.productId && it.qty > 0);
+
+  if (items.length === 0) return alert("Add at least one item");
+
+  const res = await fetch(apiReceipts, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ supplier, items })
+  });
+
+  const data = await res.json();
+  if (data.success) {
+    new bootstrap.Modal(document.getElementById("addReceiptModal")).hide();
+    document.getElementById("r_supplier").value = "";
+    document.getElementById("itemsList").innerHTML = "";
+    loadAll();
+  } else {
+    alert("Failed to save: " + (data.message || "unknown"));
+  }
+});
+
+// Validate receipt
+async function validateReceipt(id) {
+  if (!confirm("Validate this receipt? This will add stock to products.")) return;
+
+  const res = await fetch(`${apiReceipts}/${id}/validate`, { method: "PUT" });
+  const data = await res.json();
+
+  if (data.success) {
+    alert("Receipt validated.");
+    loadAll();
+  } else {
+    alert("Failed: " + (data.message || "unknown"));
+  }
+}
+
+document.getElementById("addItemBtn").addEventListener("click", () => addItemRow());
+document.getElementById("refreshBtn").addEventListener("click", loadAll);
+
+// Initialize page
+(async () => {
+  await loadProducts();
+  addItemRow(); // start with one row
+  await loadReceipts();
+})();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

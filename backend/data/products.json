@@ -1,0 +1,29 @@
+[
+  {
+    "id": 1,
+    "name": "Steel Rods",
+    "sku": "SR-001",
+    "category": "Raw Material",
+    "unit": "kg",
+    "total_stock": 400,
+    "reorder_level": 100
+  },
+  {
+    "id": 2,
+    "name": "Wooden Chair",
+    "sku": "CH-011",
+    "category": "Finished Goods",
+    "unit": "pcs",
+    "total_stock": 7,
+    "reorder_level": 10
+  },
+  {
+    "id": 3,
+    "name": "Packaging Tape",
+    "sku": "PT-002",
+    "category": "Consumable",
+    "unit": "roll",
+    "total_stock": 0,
+    "reorder_level": 5
+  }
+]

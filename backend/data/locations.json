@@ -1,0 +1,25 @@
+[
+  {
+    "id": 1,
+    "name": "Main Warehouse",
+    "stock": [
+      {
+        "productId": 1,
+        "qty": 400
+      },
+      {
+        "productId": 2,
+        "qty": 7
+      },
+      {
+        "productId": 3,
+        "qty": 0
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Production",
+    "stock": []
+  }
+]
